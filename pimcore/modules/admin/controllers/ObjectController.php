@@ -447,23 +447,28 @@ class Admin_ObjectController extends \Pimcore\Controller\Action\Admin\Element
             } else {
                 $refKey = $key;
             }
+            
             $relations = $object->getRelationData($refKey, !$fielddefinition->isRemoteOwner(), $refId);
             if (empty($relations) && !empty($parent)) {
                 $this->getDataForField($parent, $key, $fielddefinition, $objectFromVersion, $level + 1);
             } else {
                 $data = array();
-
-                if ($fielddefinition instanceof Object\ClassDefinition\Data\Href) {
+               
+                if ($fielddefinition instanceof Object\ClassDefinition\Data\Href && !($fielddefinition instanceof Object\ClassDefinition\Data\Nonownerhref)) {
                     $data = $relations[0];
                 } else {
                     foreach ($relations as $rel) {
+
                         if ($fielddefinition instanceof Object\ClassDefinition\Data\Objects) {
                             $data[] = array($rel["id"], $rel["path"], $rel["subtype"]);
+                        } else if ($fielddefinition instanceof Object\ClassDefinition\Data\Nonownerhref) {
+                            $data[] = array($rel["id"], $rel["path"], $rel["type"], $rel["subtype"], $refClass->fieldDefinitions[$refKey]->fieldtype);
                         } else {
                             $data[] = array($rel["id"], $rel["path"], $rel["type"], $rel["subtype"]);
                         }
                     }
                 }
+
                 $this->objectData[$key] = $data;
                 $this->metaData[$key]['objectid'] = $object->getId();
                 $this->metaData[$key]['inherited'] = $level != 0;
@@ -1706,6 +1711,9 @@ class Admin_ObjectController extends \Pimcore\Controller\Action\Admin\Element
 
         foreach ($toDelete as $id) {
             $owner = Object::getById($id);
+            
+            $ownerFieldDefinition = $owner->getClass()->getFieldDefinition($ownerFieldName);
+            
             //TODO: lock ?!
             if (method_exists($owner, $getter)) {
                 $currentData = $owner->$getter();
@@ -1720,6 +1728,13 @@ class Admin_ObjectController extends \Pimcore\Controller\Action\Admin\Element
                             break;
                         }
                     }
+                }else if ($ownerFieldDefinition->fieldtype == 'href'){
+                    
+                    $owner->$setter(null);
+                    $owner->setUserModification($this->getUser()->getId());
+                    $owner->save();
+                    \Logger::debug("Saved object id [ " . $owner->getId() . " ] by remote modification through [" . $object->getId() . "], Action: deleted [ " . $object->getId() . " ] from [ $ownerFieldName]");
+       
                 }
             }
         }
