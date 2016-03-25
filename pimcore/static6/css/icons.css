@@ -929,7 +929,7 @@
     background: url(/pimcore/static6/img/flat-color-icons/neutral_trading.svg) center center no-repeat !important;
 }
 
-.pimcore_icon_nonownerobjects {
+.pimcore_icon_nonownerobjects, .pimcore_icon_nonownerhref {
     background: url(/pimcore/static6/img/flat-color-icons/group-by.svg) center center no-repeat !important;
 }
 
