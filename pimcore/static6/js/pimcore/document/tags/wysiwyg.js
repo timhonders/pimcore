@@ -17,11 +17,12 @@ pimcore.document.tags.wysiwyg = Class.create(pimcore.document.tag, {
 
     initialize: function(id, name, options, data, inherited) {
 
+
         this.id = id;
         this.name = name;
         this.setupWrapper();
         options = this.parseOptions(options);
-
+        console.log(this);
         if (!data) {
             data = "";
         }
